@@ -5,6 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>First-Year Flow</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    body { background: linear-gradient(to bottom right, #111827, #1f2937); color: white; padding: 2rem; }
+    header { text-align: center; margin-bottom: 2rem; }
+    h1 { font-size: 2.5rem; color: #fbbf24; }
+    p.tagline { font-size: 1.2rem; color: #d1d5db; }
+    section { margin-top: 2rem; background-color: #1e293b; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 0 20px rgba(255, 255, 255, 0.05); }
+    h2 { color: #fbbf24; margin-bottom: 1rem; }
+    input, select, textarea { width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: none; margin-top: 0.5rem; margin-bottom: 1rem; font-size: 1rem; }
+    button { background: #fbbf24; color: black; padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; }
+    .chat-box { background: #0f172a; margin-top: 1rem; padding: 1rem; border-radius: 0.75rem; max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; scroll-behavior: smooth; }
+    .chat-message { background-color: #334155; padding: 0.75rem 1rem; border-radius: 1rem; max-width: 70%; word-wrap: break-word; }
+    .chat-message.user { background-color: #fbbf24; color: black; align-self: flex-end; }
+    .chat-message.friend { background-color: #475569; align-self: flex-start; }
+  </style>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import {
@@ -109,6 +124,19 @@
   </script>
 </head>
 <body>
-  <!-- Page content goes here -->
+  <header>
+    <h1>First-Year Flow</h1>
+    <p class="tagline">Find your people. Focus your path. 💫</p>
+  </header>
+
+  <section>
+    <h2>🤝 Make a New Friend</h2>
+    <p>Enter your name, interest, and city — we’ll match you with someone on your vibe!</p>
+    <input type="text" id="userName" placeholder="Your name" />
+    <input type="text" id="userInterest" placeholder="Something you love (e.g. anime, coding, dance)" />
+    <input type="text" id="userCity" placeholder="City or College" />
+    <button onclick="suggestBuddy()">Find Me a Friend</button>
+    <div class="chat-box" id="buddyOutput"></div>
+  </section>
 </body>
 </html>
