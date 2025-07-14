@@ -65,6 +65,34 @@
       margin-top: 1rem;
       white-space: pre-wrap;
     }
+    .chat-box {
+      background: #0f172a;
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 0.75rem;
+      max-height: 250px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      scroll-behavior: smooth;
+    }
+    .chat-message {
+      background-color: #334155;
+      padding: 0.75rem 1rem;
+      border-radius: 1rem;
+      max-width: 70%;
+      word-wrap: break-word;
+    }
+    .chat-message.user {
+      background-color: #fbbf24;
+      color: black;
+      align-self: flex-end;
+    }
+    .chat-message.friend {
+      background-color: #475569;
+      align-self: flex-start;
+    }
   </style>
 </head>
 <body>
@@ -104,7 +132,7 @@
     <input type="text" id="userInterest" placeholder="Something you love (e.g. anime, coding, dance)" />
     <input type="text" id="userCity" placeholder="City or College" />
     <button onclick="suggestBuddy()">Find Me a Friend</button>
-    <div class="output" id="buddyOutput"></div>
+    <div class="chat-box" id="buddyOutput"></div>
   </section>
 
   <script>
@@ -156,21 +184,34 @@
       const name = document.getElementById("userName").value.trim();
       const interest = document.getElementById("userInterest").value.trim();
       const city = document.getElementById("userCity").value.trim();
+      const chatBox = document.getElementById("buddyOutput");
 
       if (!name || !interest || !city) {
-        document.getElementById("buddyOutput").textContent = "Please fill in all details.";
+        chatBox.innerHTML = "<div class='chat-message'>Please fill in all details.</div>";
         return;
       }
 
-      const buddySamples = [
-        `Hey ${name}! We found someone from ${city} who also loves ${interest}. Check your inbox or community space to meet them! ✨`,
-        `You’re not alone, ${name} — your new friend from ${city} is into ${interest} too. Start a convo today! 🤝`,
-        `Boom! Match made in student heaven: you + someone from ${city} who vibes with ${interest}. DM link coming soon. 💬`
+      const userMsg = document.createElement("div");
+      userMsg.className = "chat-message user";
+      userMsg.textContent = `Hi, I’m ${name}! I like ${interest} & I’m from ${city}!`;
+      chatBox.appendChild(userMsg);
+
+      const fakeReplies = [
+        `Hey ${name}, I love ${interest} too! I’m from ${city} 😊`,
+        `OMG ${interest} is my thing too, and I’m from ${city} as well! Let’s connect! ✨`,
+        `Heyy ${name}, let's collab on our shared love for ${interest} sometime! 🤝`,
+        `Small world! I’m also into ${interest}. From ${city}, nice to meet you! 🎉`
       ];
 
-      const output = buddySamples[Math.floor(Math.random() * buddySamples.length)];
-      document.getElementById("buddyOutput").textContent = output;
+      setTimeout(() => {
+        const reply = document.createElement("div");
+        reply.className = "chat-message friend";
+        reply.textContent = fakeReplies[Math.floor(Math.random() * fakeReplies.length)];
+        chatBox.appendChild(reply);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }, 600);
     }
   </script>
 </body>
 </html>
+
