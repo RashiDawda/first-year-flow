@@ -5,6 +5,60 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>First-Year Flow</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBzUXMTpDPSXQDMUqDb3rePCC7HA-CkVIw",
+      authDomain: "first-year-flow.firebaseapp.com",
+      projectId: "first-year-flow",
+      storageBucket: "first-year-flow.appspot.com",
+      messagingSenderId: "304791330709",
+      appId: "1:304791330709:web:0e128dfc0cc5834438609c",
+      measurementId: "G-Q1XYHEZRPK"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.suggestBuddy = async function () {
+      const name = document.getElementById("userName").value.trim();
+      const interest = document.getElementById("userInterest").value.trim();
+      const city = document.getElementById("userCity").value.trim();
+      const chatBox = document.getElementById("buddyOutput");
+
+      if (!name || !interest || !city) {
+        chatBox.innerHTML = "<div class='chat-message'>Please fill in all details.</div>";
+        return;
+      }
+
+      await addDoc(collection(db, "users"), { name, interest, city });
+
+      const q = query(collection(db, "users"), where("interest", "==", interest), where("city", "==", city));
+
+      onSnapshot(q, (snapshot) => {
+        chatBox.innerHTML = '';
+
+        const userMsg = document.createElement("div");
+        userMsg.className = "chat-message user";
+        userMsg.textContent = `Hi, I’m ${name}! I like ${interest} & I’m from ${city}!`;
+        chatBox.appendChild(userMsg);
+
+        snapshot.forEach((docSnap) => {
+          const user = docSnap.data();
+          if (user.name !== name) {
+            const reply = document.createElement("div");
+            reply.className = "chat-message friend";
+            reply.textContent = `Hey ${name}, I’m ${user.name} from ${user.city} & I love ${user.interest} too! Let’s connect ✨`;
+            chatBox.appendChild(reply);
+          }
+        });
+
+        chatBox.scrollTop = chatBox.scrollHeight;
+      });
+    }
+  </script>
   <style>
     * {
       margin: 0;
@@ -179,39 +233,6 @@
 
       document.getElementById("planOutput").textContent = plan;
     }
-
-    function suggestBuddy() {
-      const name = document.getElementById("userName").value.trim();
-      const interest = document.getElementById("userInterest").value.trim();
-      const city = document.getElementById("userCity").value.trim();
-      const chatBox = document.getElementById("buddyOutput");
-
-      if (!name || !interest || !city) {
-        chatBox.innerHTML = "<div class='chat-message'>Please fill in all details.</div>";
-        return;
-      }
-
-      const userMsg = document.createElement("div");
-      userMsg.className = "chat-message user";
-      userMsg.textContent = `Hi, I’m ${name}! I like ${interest} & I’m from ${city}!`;
-      chatBox.appendChild(userMsg);
-
-      const fakeReplies = [
-        `Hey ${name}, I love ${interest} too! I’m from ${city} 😊`,
-        `OMG ${interest} is my thing too, and I’m from ${city} as well! Let’s connect! ✨`,
-        `Heyy ${name}, let's collab on our shared love for ${interest} sometime! 🤝`,
-        `Small world! I’m also into ${interest}. From ${city}, nice to meet you! 🎉`
-      ];
-
-      setTimeout(() => {
-        const reply = document.createElement("div");
-        reply.className = "chat-message friend";
-        reply.textContent = fakeReplies[Math.floor(Math.random() * fakeReplies.length)];
-        chatBox.appendChild(reply);
-        chatBox.scrollTop = chatBox.scrollHeight;
-      }, 600);
-    }
   </script>
 </body>
 </html>
-
