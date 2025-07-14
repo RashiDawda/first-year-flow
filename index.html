@@ -13,130 +13,67 @@
     p.tagline { font-size: 1.2rem; color: #d1d5db; }
     section { margin-top: 2rem; background-color: #1e293b; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 0 20px rgba(255, 255, 255, 0.05); }
     h2 { color: #fbbf24; margin-bottom: 1rem; }
-    input, select, textarea { width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: none; margin-top: 0.5rem; margin-bottom: 1rem; font-size: 1rem; }
+    input, textarea { width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: none; margin-top: 0.5rem; margin-bottom: 1rem; font-size: 1rem; }
     button { background: #fbbf24; color: black; padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; }
-    .chat-box { background: #0f172a; margin-top: 1rem; padding: 1rem; border-radius: 0.75rem; max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; scroll-behavior: smooth; }
-    .chat-message { background-color: #334155; padding: 0.75rem 1rem; border-radius: 1rem; max-width: 70%; word-wrap: break-word; }
-    .chat-message.user { background-color: #fbbf24; color: black; align-self: flex-end; }
-    .chat-message.friend { background-color: #475569; align-self: flex-start; }
+    .chat-box, .planner-box { background: #0f172a; margin-top: 1rem; padding: 1rem; border-radius: 0.75rem; max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; scroll-behavior: smooth; }
+    .message { background-color: #334155; padding: 0.75rem 1rem; border-radius: 1rem; word-wrap: break-word; }
+    .assistant { background-color: #fbbf24; color: black; align-self: flex-start; }
+    .user { background-color: #475569; align-self: flex-end; }
+    a.template { color: #fbbf24; text-decoration: underline; margin-top: 0.5rem; display: block; }
   </style>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import {
-      getFirestore, collection, addDoc, query, where, getDocs, onSnapshot, doc, setDoc
-    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBzUXMTpDPSXQDMUqDb3rePCC7HA-CkVIw",
-      authDomain: "first-year-flow.firebaseapp.com",
-      projectId: "first-year-flow",
-      storageBucket: "first-year-flow.appspot.com",
-      messagingSenderId: "304791330709",
-      appId: "1:304791330709:web:0e128dfc0cc5834438609c",
-      measurementId: "G-Q1XYHEZRPK"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    window.suggestBuddy = async function () {
-      const name = document.getElementById("userName").value.trim();
-      const interest = document.getElementById("userInterest").value.trim();
-      const city = document.getElementById("userCity").value.trim();
-      const chatBox = document.getElementById("buddyOutput");
-
-      if (!name || !interest || !city) {
-        chatBox.innerHTML = "<div class='chat-message'>Please fill in all details.</div>";
-        return;
-      }
-
-      await addDoc(collection(db, "users"), { name, interest, city });
-
-      const q = query(collection(db, "users"), where("interest", "==", interest), where("city", "==", city));
-      const snapshot = await getDocs(q);
-
-      chatBox.innerHTML = '';
-
-      const userMsg = document.createElement("div");
-      userMsg.className = "chat-message user";
-      userMsg.textContent = `Hi, I’m ${name}! I like ${interest} & I’m from ${city}!`;
-      chatBox.appendChild(userMsg);
-
-      let found = false;
-
-      snapshot.forEach((docSnap) => {
-        const user = docSnap.data();
-        if (user.name !== name) {
-          found = true;
-          const reply = document.createElement("div");
-          reply.className = "chat-message friend";
-          reply.textContent = `Hey ${name}, I’m ${user.name} from ${user.city} & I love ${user.interest} too! Message me below 💬`;
-          chatBox.appendChild(reply);
-
-          const dmForm = document.createElement("div");
-          dmForm.innerHTML = `
-            <input id="dmText" placeholder="Say hi to ${user.name}" style="margin-top:0.5rem;padding:0.5rem;width:90%" />
-            <button onclick="sendDM('${name}','${user.name}')">Send</button>
-            <div id="inbox"></div>
-          `;
-          chatBox.appendChild(dmForm);
-
-          listenForDMs(user.name, name);
-        }
-      });
-
-      if (!found) {
-        const noMatch = document.createElement("div");
-        noMatch.className = "chat-message friend";
-        noMatch.textContent = `No buddy found yet — but you’re now visible to others! Share the app to find your match 💛`;
-        chatBox.appendChild(noMatch);
-      }
-
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    window.sendDM = async function (from, to) {
-      const text = document.getElementById("dmText").value;
-      if (!text) return;
-      const chatId = [from, to].sort().join("_");
-      const ref = doc(db, "inbox", `${chatId}_${Date.now()}`);
-      await setDoc(ref, { from, to, text, time: Date.now(), chatId });
-      document.getElementById("dmText").value = "";
-    }
-
-    function listenForDMs(user1, user2) {
-      const inbox = document.getElementById("inbox");
-      const chatId = [user1, user2].sort().join("_");
-      const inboxQuery = query(collection(db, "inbox"), where("chatId", "==", chatId));
-      onSnapshot(inboxQuery, (snapshot) => {
-        inbox.innerHTML = '<strong>Inbox:</strong><br>';
-        const messages = [];
-        snapshot.forEach(doc => messages.push(doc.data()));
-        messages.sort((a, b) => a.time - b.time);
-        messages.forEach(msg => {
-          const div = document.createElement("div");
-          div.style.marginTop = '5px';
-          div.textContent = `${msg.from}: ${msg.text}`;
-          inbox.appendChild(div);
-        });
-      });
-    }
-  </script>
 </head>
 <body>
   <header>
     <h1>First-Year Flow</h1>
-    <p class="tagline">Find your people. Focus your path. 💫</p>
+    <p class="tagline">Plan. Focus. Glow up ✨</p>
   </header>
 
   <section>
-    <h2>🤝 Make a New Friend</h2>
-    <p>Enter your name, interest, and city — we’ll match you with someone on your vibe!</p>
-    <input type="text" id="userName" placeholder="Your name" />
-    <input type="text" id="userInterest" placeholder="Something you love (e.g. anime, coding, dance)" />
-    <input type="text" id="userCity" placeholder="City or College" />
-    <button onclick="suggestBuddy()">Find Me a Friend</button>
-    <div class="chat-box" id="buddyOutput"></div>
+    <h2>🎯 Aesthetic Study Planner</h2>
+    <p>Create and organize your study schedule like a productivity queen 👑</p>
+    <div class="planner-box">
+      <a class="template" href="https://www.notion.so" target="_blank">📓 Notion Study Planner Template</a>
+      <a class="template" href="https://www.canva.com" target="_blank">🎨 Canva Daily Study Tracker</a>
+      <a class="template" href="https://www.notion.so" target="_blank">🧠 Notion Semester Overview + Deadlines</a>
+      <a class="template" href="https://www.canva.com" target="_blank">💡 Canva Weekly Habit Builder</a>
+    </div>
   </section>
+
+  <section>
+    <h2>💬 Motivation Assistant</h2>
+    <p>Feeling stuck? Type how you feel and get instant encouragement ✨</p>
+    <textarea id="userMood" placeholder="I feel overwhelmed with assignments..."></textarea>
+    <button onclick="motivateMe()">Motivate Me</button>
+    <div class="chat-box" id="motivationOutput"></div>
+  </section>
+
+  <script>
+    const output = document.getElementById("motivationOutput");
+
+    function motivateMe() {
+      const mood = document.getElementById("userMood").value.trim();
+      if (!mood) return;
+
+      const replies = [
+        "You're doing better than you think 💛 Keep going.",
+        "Small steps are still progress. Take a deep breath 🌸",
+        "Don’t compare your day 1 to someone else’s day 100 💫",
+        "You’ve got this! Drink some water and take it one task at a time 💧",
+        "You're not alone — you're just getting started, and that’s powerful! 💥"
+      ];
+
+      const userMsg = document.createElement("div");
+      userMsg.className = "message user";
+      userMsg.textContent = mood;
+      output.appendChild(userMsg);
+
+      const botReply = document.createElement("div");
+      botReply.className = "message assistant";
+      botReply.textContent = replies[Math.floor(Math.random() * replies.length)];
+      output.appendChild(botReply);
+
+      output.scrollTop = output.scrollHeight;
+    }
+  </script>
 </body>
 </html>
