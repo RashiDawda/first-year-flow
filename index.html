@@ -7,7 +7,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    import {
+      getFirestore, collection, addDoc, query, where, getDocs, onSnapshot, doc, setDoc
+    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBzUXMTpDPSXQDMUqDb3rePCC7HA-CkVIw",
@@ -36,213 +38,77 @@
       await addDoc(collection(db, "users"), { name, interest, city });
 
       const q = query(collection(db, "users"), where("interest", "==", interest), where("city", "==", city));
+      const snapshot = await getDocs(q);
 
-      onSnapshot(q, (snapshot) => {
-        chatBox.innerHTML = '';
+      chatBox.innerHTML = '';
 
-        const userMsg = document.createElement("div");
-        userMsg.className = "chat-message user";
-        userMsg.textContent = `Hi, I’m ${name}! I like ${interest} & I’m from ${city}!`;
-        chatBox.appendChild(userMsg);
+      const userMsg = document.createElement("div");
+      userMsg.className = "chat-message user";
+      userMsg.textContent = `Hi, I’m ${name}! I like ${interest} & I’m from ${city}!`;
+      chatBox.appendChild(userMsg);
 
-        let found = false;
+      let found = false;
 
-        snapshot.forEach((docSnap) => {
-          const user = docSnap.data();
-          if (user.name !== name) {
-            found = true;
-            const reply = document.createElement("div");
-            reply.className = "chat-message friend";
-            reply.textContent = `Hey ${name}, I’m ${user.name} from ${user.city} & I love ${user.interest} too! Let’s connect ✨`;
-            chatBox.appendChild(reply);
-          }
-        });
+      snapshot.forEach((docSnap) => {
+        const user = docSnap.data();
+        if (user.name !== name) {
+          found = true;
+          const reply = document.createElement("div");
+          reply.className = "chat-message friend";
+          reply.textContent = `Hey ${name}, I’m ${user.name} from ${user.city} & I love ${user.interest} too! Message me below 💬`;
+          chatBox.appendChild(reply);
 
-        if (!found) {
-          const noMatch = document.createElement("div");
-          noMatch.className = "chat-message friend";
-          noMatch.textContent = `No buddy found yet — but you’re now visible to others! Share the app to find your match 💛`;
-          chatBox.appendChild(noMatch);
+          const dmForm = document.createElement("div");
+          dmForm.innerHTML = `
+            <input id="dmText" placeholder="Say hi to ${user.name}" style="margin-top:0.5rem;padding:0.5rem;width:90%" />
+            <button onclick="sendDM('${name}','${user.name}')">Send</button>
+            <div id="inbox"></div>
+          `;
+          chatBox.appendChild(dmForm);
+
+          listenForDMs(user.name, name);
         }
+      });
 
-        chatBox.scrollTop = chatBox.scrollHeight;
+      if (!found) {
+        const noMatch = document.createElement("div");
+        noMatch.className = "chat-message friend";
+        noMatch.textContent = `No buddy found yet — but you’re now visible to others! Share the app to find your match 💛`;
+        chatBox.appendChild(noMatch);
+      }
+
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    window.sendDM = async function (from, to) {
+      const text = document.getElementById("dmText").value;
+      if (!text) return;
+      const chatId = [from, to].sort().join("_");
+      const ref = doc(db, "inbox", `${chatId}_${Date.now()}`);
+      await setDoc(ref, { from, to, text, time: Date.now(), chatId });
+      document.getElementById("dmText").value = "";
+    }
+
+    function listenForDMs(user1, user2) {
+      const inbox = document.getElementById("inbox");
+      const chatId = [user1, user2].sort().join("_");
+      const inboxQuery = query(collection(db, "inbox"), where("chatId", "==", chatId));
+      onSnapshot(inboxQuery, (snapshot) => {
+        inbox.innerHTML = '<strong>Inbox:</strong><br>';
+        const messages = [];
+        snapshot.forEach(doc => messages.push(doc.data()));
+        messages.sort((a, b) => a.time - b.time);
+        messages.forEach(msg => {
+          const div = document.createElement("div");
+          div.style.marginTop = '5px';
+          div.textContent = `${msg.from}: ${msg.text}`;
+          inbox.appendChild(div);
+        });
       });
     }
   </script>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Poppins', sans-serif;
-    }
-    body {
-      background: linear-gradient(to bottom right, #111827, #1f2937);
-      color: white;
-      padding: 2rem;
-    }
-    header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    h1 {
-      font-size: 2.5rem;
-      color: #fbbf24;
-    }
-    p.tagline {
-      font-size: 1.2rem;
-      color: #d1d5db;
-    }
-    section {
-      margin-top: 2rem;
-      background-color: #1e293b;
-      padding: 1.5rem;
-      border-radius: 1rem;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
-    }
-    h2 {
-      color: #fbbf24;
-      margin-bottom: 1rem;
-    }
-    textarea, input, select {
-      width: 100%;
-      padding: 0.75rem;
-      border-radius: 0.5rem;
-      border: none;
-      margin-top: 0.5rem;
-      margin-bottom: 1rem;
-      font-size: 1rem;
-    }
-    button {
-      background: #fbbf24;
-      color: black;
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 0.5rem;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    .output {
-      background: #111827;
-      padding: 1rem;
-      border-radius: 0.5rem;
-      margin-top: 1rem;
-      white-space: pre-wrap;
-    }
-    .chat-box {
-      background: #0f172a;
-      margin-top: 1rem;
-      padding: 1rem;
-      border-radius: 0.75rem;
-      max-height: 250px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      scroll-behavior: smooth;
-    }
-    .chat-message {
-      background-color: #334155;
-      padding: 0.75rem 1rem;
-      border-radius: 1rem;
-      max-width: 70%;
-      word-wrap: break-word;
-    }
-    .chat-message.user {
-      background-color: #fbbf24;
-      color: black;
-      align-self: flex-end;
-    }
-    .chat-message.friend {
-      background-color: #475569;
-      align-self: flex-start;
-    }
-  </style>
 </head>
 <body>
-  <header>
-    <h1>First-Year Flow</h1>
-    <p class="tagline">Feel Connected. Stay Focused. Grow Together.</p>
-  </header>
-
-  <section>
-    <h2>🧠 Mental & Emotional Reset</h2>
-    <label for="feeling">How are you feeling today?</label>
-    <select id="feeling">
-      <option value="overwhelmed">Overwhelmed</option>
-      <option value="anxious">Anxious</option>
-      <option value="unmotivated">Unmotivated</option>
-      <option value="lonely">Lonely</option>
-      <option value="doing well">Doing well</option>
-    </select>
-    <button onclick="generateSupport()">Get Flow Reset</button>
-    <div class="output" id="supportOutput"></div>
-  </section>
-
-  <section>
-    <h2>📅 Study-Life Plan Generator</h2>
-    <label for="goal">What's your main goal today?</label>
-    <input type="text" id="goal" placeholder="e.g. Finish 1 chapter of Math" />
-    <label for="hours">Available time (in hours):</label>
-    <input type="number" id="hours" min="1" max="12" />
-    <button onclick="generatePlan()">Generate Plan</button>
-    <div class="output" id="planOutput"></div>
-  </section>
-
-  <section>
-    <h2>🤝 Make a New Friend</h2>
-    <p>Enter your name, interest, and city — we’ll match you with someone in your vibe!</p>
-    <input type="text" id="userName" placeholder="Your name" />
-    <input type="text" id="userInterest" placeholder="Something you love (e.g. anime, coding, dance)" />
-    <input type="text" id="userCity" placeholder="City or College" />
-    <button onclick="suggestBuddy()">Find Me a Friend</button>
-    <div class="chat-box" id="buddyOutput"></div>
-  </section>
-
-  <script>
-    function generateSupport() {
-      const feeling = document.getElementById("feeling").value;
-      let message = "";
-
-      switch (feeling) {
-        case "overwhelmed":
-          message = "Breathe deeply. Prioritize just ONE task for the next hour. Perfection isn’t the goal — progress is.";
-          break;
-        case "anxious":
-          message = "Try a 5-minute break with calm music. Write down what’s causing stress — then let’s break it into tiny steps.";
-          break;
-        case "unmotivated":
-          message = "Motivation follows action. Start a 10-minute timer and just begin. You’ll feel the shift.";
-          break;
-        case "lonely":
-          message = "You’re not alone. Reach out to one friend today, even just to say hi. Or write down how you feel — it helps.";
-          break;
-        case "doing well":
-          message = "Amazing! Keep that energy going. Help someone else feel this way too today. 💛";
-          break;
-      }
-      document.getElementById("supportOutput").textContent = message;
-    }
-
-    function generatePlan() {
-      const goal = document.getElementById("goal").value.trim();
-      const hours = parseInt(document.getElementById("hours").value);
-
-      if (!goal || isNaN(hours) || hours < 1) {
-        document.getElementById("planOutput").textContent = "Please fill in your goal and time correctly.";
-        return;
-      }
-
-      let plan = `Today’s Focus: ${goal}\n\n`;
-      plan += `⏱ Total Time: ${hours} hour${hours > 1 ? 's' : ''}\n`;
-      plan += `📚 Suggested Routine:\n`;
-      plan += `- ${Math.floor((hours * 0.5) * 60)} mins: Deep work on your goal\n`;
-      plan += `- ${Math.floor((hours * 0.25) * 60)} mins: Lighter task / review\n`;
-      plan += `- ${Math.floor((hours * 0.25) * 60)} mins: Breaks, reflection, chill\n\n`;
-      plan += `💡 Tip: Start with the hardest part first. Energy fades, but momentum builds.`;
-
-      document.getElementById("planOutput").textContent = plan;
-    }
-  </script>
+  <!-- Page content goes here -->
 </body>
 </html>
