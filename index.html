@@ -45,15 +45,25 @@
         userMsg.textContent = `Hi, I’m ${name}! I like ${interest} & I’m from ${city}!`;
         chatBox.appendChild(userMsg);
 
+        let found = false;
+
         snapshot.forEach((docSnap) => {
           const user = docSnap.data();
           if (user.name !== name) {
+            found = true;
             const reply = document.createElement("div");
             reply.className = "chat-message friend";
             reply.textContent = `Hey ${name}, I’m ${user.name} from ${user.city} & I love ${user.interest} too! Let’s connect ✨`;
             chatBox.appendChild(reply);
           }
         });
+
+        if (!found) {
+          const noMatch = document.createElement("div");
+          noMatch.className = "chat-message friend";
+          noMatch.textContent = `No buddy found yet — but you’re now visible to others! Share the app to find your match 💛`;
+          chatBox.appendChild(noMatch);
+        }
 
         chatBox.scrollTop = chatBox.scrollHeight;
       });
