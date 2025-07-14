@@ -8,18 +8,33 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
     body { background: linear-gradient(to bottom right, #111827, #1f2937); color: white; padding: 2rem; }
-    header { text-align: center; margin-bottom: 2rem; }
+    header { text-align: center; margin-bottom: 2rem; animation: fadeIn 1s ease-in-out; }
     h1 { font-size: 2.5rem; color: #fbbf24; }
     p.tagline { font-size: 1.2rem; color: #d1d5db; }
-    section { margin-top: 2rem; background-color: #1e293b; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 0 20px rgba(255, 255, 255, 0.05); }
+    section { margin-top: 2rem; background-color: #1e293b; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 0 20px rgba(255, 255, 255, 0.05); animation: slideUp 0.8s ease forwards; opacity: 0; }
     h2 { color: #fbbf24; margin-bottom: 1rem; }
     input, textarea { width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: none; margin-top: 0.5rem; margin-bottom: 1rem; font-size: 1rem; }
-    button { background: #fbbf24; color: black; padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; }
+    button { background: #fbbf24; color: black; padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; transition: transform 0.2s ease; }
+    button:hover { transform: scale(1.05); }
     .chat-box, .planner-box { background: #0f172a; margin-top: 1rem; padding: 1rem; border-radius: 0.75rem; max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; scroll-behavior: smooth; }
-    .message { background-color: #334155; padding: 0.75rem 1rem; border-radius: 1rem; word-wrap: break-word; }
+    .message { background-color: #334155; padding: 0.75rem 1rem; border-radius: 1rem; word-wrap: break-word; animation: fadeInUp 0.4s ease forwards; }
     .assistant { background-color: #fbbf24; color: black; align-self: flex-start; }
     .user { background-color: #475569; align-self: flex-end; }
     a.template { color: #fbbf24; text-decoration: underline; margin-top: 0.5rem; display: block; }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
@@ -30,7 +45,7 @@
 
   <section>
     <h2>🎯 Aesthetic Study Planner</h2>
-    <p>The calm, collected version of you starts with a solid plan.  👑</p>
+    <p>The calm, collected version of you starts with a solid plan.</p>
     <div class="planner-box">
       <a class="template" href="https://www.notion.so/templates/study-planner" target="_blank">📓 Notion Study Planner Template</a>
       <a class="template" href="https://www.canva.com/templates/EAE7gIb1KxA-daily-study-planner/" target="_blank">🎨 Canva Daily Study Tracker</a>
@@ -65,8 +80,7 @@
         "Turn chaos into clarity — one beautifully planned day at a time.",
         "Study smart. Stay grounded. Glow up on your own terms.",
         "Your study game just got a whole aesthetic upgrade."
-          
-                ];
+      ];
 
       const userMsg = document.createElement("div");
       userMsg.className = "message user";
@@ -80,6 +94,17 @@
 
       output.scrollTop = output.scrollHeight;
     }
+
+    // Animate sections on load
+    window.onload = () => {
+      const sections = document.querySelectorAll("section");
+      sections.forEach((section, i) => {
+        setTimeout(() => {
+          section.style.opacity = 1;
+          section.style.transform = "translateY(0)";
+        }, 300 * i);
+      });
+    };
   </script>
 </body>
 </html>
